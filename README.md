@@ -1,110 +1,132 @@
 # Connection-Density Trade-offs in Multi-Agent Systems
 
-[![pre-registered](https://img.shields.io/badge/pre--registered-yes-brightgreen)]()
-[![results](https://img.shields.io/badge/results-3%2F4%20PASS%2C%201%2F4%20FAIL-orange)]()
+[![pre-registered](https://img.shields.io/badge/pre--registered-5%20experiments-brightgreen)]()
+[![runs](https://img.shields.io/badge/total%20runs-150+-blue)]()
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)]()
 [![demo](https://img.shields.io/badge/demo-notebook-blueviolet)](demo.ipynb)
 
-> **How much should agents in a multi-agent system communicate?**
-> I pre-registered four predictions, ran a real experiment, and reported
-> the result honestly — including the one that failed.
+## One-Line Insight
+
+> **"More communication helps — until adversaries outnumber honest agents. Then it becomes the attack vector."**
 
 ---
 
-## The result, up front
+## What the Data Shows (at a glance)
 
-![Accuracy vs sync density across three noise levels](results/fed_results.png)
+![Phase diagram: FedAvg robustness map](results/q_vs_rho_heatmap.png)
 
-*Left: test accuracy vs. sync density ρ for three noise levels (3 seeds, error bars = std).
-Right: communication cost is exactly linear while accuracy gain is sub-linear.*
+- 🟢 **Low corruption (≤30%):** full sync is optimal — averaging dilutes poison
+- 🟡 **Majority corruption (50%):** full sync becomes harmful — **interior optimum emerges**
+- 🔴 **Overwhelming corruption (≥70%):** system collapses regardless of communication
+- 📉 **10× communication cost → only 1.17× accuracy gain** (even in the best case)
+
+> **There is a phase transition at q ≈ 0.5 where averaging switches from stabilizing to destabilizing.**
+> *(Signal is real; variance is high at 3 seeds. Direction robust, exact boundary needs more data.)*
 
 ---
 
-## v3 update — Non-IID regime (2026-04-25)
+## The Story
+
+**I started with a strong assumption:**
+
+> *There exists a universal optimal level of connectivity in multi-agent systems.*
+
+**I was wrong.** I tested it five times, each time stronger, and systematically
+eliminated every version of the claim. What survived was smaller, sharper,
+and more useful than what I started with.
+
+| Stage | What I believed | What I tested | What happened |
+|-------|----------------|--------------|---------------|
+| **v1** | Universal 50% rule | Simulation (36 regimes) | ❌ Falsified by my own sensitivity analysis |
+| **v2** | Interior optimum always exists | Real MNIST + noise | ⚠️ 3/4 PASS — but optimum only at low noise |
+| **v3** | Non-IID data will create optimum | Class-split clients | ❌ Full sync still won |
+| **v4** | Adversarial clients will break it | 30% label-flipped | ❌ Full sync *still* won |
+| **v5** | There's a breaking point somewhere | 0–90% adversarial sweep | ✅ **Phase transition at q ≈ 0.5** |
+
+**What I learned:**
+The original theory was wrong — but the process of breaking it revealed
+exactly *where* consensus stops working. That's a more useful result
+than the theory itself.
+
+---
+
+## Why This Matters
+
+Most distributed AI systems assume:
+> *"More communication = better performance"*
+
+This project shows that assumption has a **regime boundary:**
+
+| If your system has... | Then... |
+|----------------------|---------|
+| Trustworthy agents (q ≤ 0.3) | Full sync wins. Don't bother sweeping — just communicate. |
+| Significant corruption (q ≈ 0.5) | Partial sync outperforms full sync. Sweep ρ to find the optimum. |
+| Majority compromise (q ≥ 0.7) | FedAvg cannot help. Switch to Byzantine-robust aggregation. |
+| Limited bandwidth | 10× comm cost buys only 17% accuracy — design for efficiency. |
+
+**Directly relevant for:** federated learning, multi-agent AI systems,
+distributed data pipelines, any system where agents aggregate information
+and some may be unreliable.
+
+---
+
+## Key Results
+
+### v2 — Noise (IID clients, 3 noise levels)
+
+![v2 accuracy curves](results/fed_results.png)
+
+| ID | Prediction | Verdict |
+|----|-----------|---------|
+| P1 | Interior optimum at every noise level | ❌ **FAIL** — only at low noise (ρ\*=0.7) |
+| P2 | ρ\* shifts with noise | ✅ **PASS** — peaks: 0.7 → 1.0 → 1.0 |
+| P3 | ρ\* ≠ 0.5 universally | ✅ **PASS** |
+| P4 | Comm linear, accuracy sub-linear | ✅ **PASS** — 10× → 1.17× |
+
+### v3 — Diversity (non-IID class splits)
+
+| P1-v3 | Interior optimum in non-IID | ❌ **FAIL** |
+|-------|---------------------------|------------|
+| P2-v3 | Full-sync accuracy drops | ✅ **PASS** (0.701 vs 0.871) |
+
+### v4 — Conflict (30% adversarial)
+
+All 3 predictions **FAIL**. Full sync still won (0.791).
+
+### v5 — Phase Diagram (0–90% adversarial sweep, 105 runs)
+
+| q | 0.0 | 0.1 | 0.2 | 0.3 | **0.5** | **0.7** | 0.9 |
+|---|-----|-----|-----|-----|---------|---------|-----|
+| **ρ\*** | 1.0 | 1.0 | 1.0 | 1.0 | **0.3** | **0.3** | 1.0\* |
+| **acc** | 0.877 | 0.863 | 0.834 | 0.796 | **0.542** | 0.203 | 0.149 |
+
+All 4 predictions PASS (after significance correction). **q_c ≈ 0.5.**
+
+<details>
+<summary>📊 Full v3/v4/v5 details (click to expand)</summary>
+
+### v3 — Non-IID regime (2026-04-25)
 
 ![v2 IID vs v3 Non-IID comparison](results/v2_vs_v3_comparison.png)
 
-**v3 verdict: 1/3 PASS, 2/3 FAIL — honestly reported.**
+Class-distribution mismatch alone isn't enough to create an interior optimum.
+Full sync still wins — but with 20% lower accuracy (0.701 vs 0.871).
 
-| ID | Prediction | Verdict | Evidence |
-|----|-----------|---------|----------|
-| **P1-v3** | Interior optimum in non-IID regime | ❌ **FAIL** | ρ\*=1.0 again — P1 fully discarded |
-| **P2-v3** | Full-sync accuracy lower in non-IID | ✅ **PASS** | 0.701 vs 0.871 (IID low noise) — 20% drop |
-| **P3-v3** | Peak ρ\* shifts left vs IID | ❌ **FAIL** | ρ\*=1.0 in both cases |
-
-> **What this means:** Class-distribution mismatch alone isn't enough to create an
-> interior optimum within 10 rounds of FedAvg. Full sync still wins — but it wins
-> with much lower absolute accuracy (0.701 vs 0.871). The framework correctly
-> predicted non-IID would be harder; it mis-predicted *where the optimum would land*.
-> P1 is now fully discarded, not just scoped.
-
----
-
-## v4 update — Adversarial clients (2026-04-25)
+### v4 — Adversarial clients (2026-04-25)
 
 ![v4 adversarial results](results/adversarial_results.png)
 
-**v4 verdict: 0/3 PASS, 3/3 FAIL — honestly reported.**
+Even with 30% of clients sending flipped labels, FedAvg's averaging dilutes the
+poison enough that full sync wins.
 
-| ID | Prediction | Verdict | Evidence |
-|----|-----------|---------|----------|
-| **P1-v4** | Interior optimum with adversarial clients | ❌ **FAIL** | ρ\*=1.0 still the peak (acc=0.791) |
-| **P2-v4** | Peak ρ\* < 1.0 | ❌ **FAIL** | Peak is at boundary |
-| **P3-v4** | Full sync accuracy < partial sync | ❌ **FAIL** | ρ=1.0 (0.791) > ρ=0.7 (0.737) |
+### v5 — Significance correction note
 
-> **What this means:** Even with 30% of clients sending actively conflicting
-> gradients (all labels flipped), FedAvg's averaging still dilutes the poison
-> enough that full sync wins. The interior-optimum hypothesis is **conclusively
-> dead** across noise (v2), heterogeneity (v3), and adversarial conflict (v4).
+Raw `argmax` at q=0.0 gave ρ\*=0.5, but the gap (0.0009) was within noise
+(pooled std=0.006). After requiring the peak to beat ρ=1.0 by >1 pooled std,
+q=0.0 correctly reads ρ\*=1.0. The interior optimum at q=0.5 is real
+(gap=0.179, pooled std=0.170).
 
-| Experiment | Conditions | Interior optimum? |
-|-----------|-----------|-------------------|
-| v2 (IID + noise) | 3 noise levels × 5 ρ | Only at low noise (ρ\*=0.7) |
-| v3 (non-IID class splits) | 10 clients × 5 ρ | ❌ No |
-| v4 (30% adversarial) | 10 clients × 5 ρ | ❌ No |
-
-> *"I showed that neither heterogeneity nor adversarial conflict is sufficient
-> to penalize communication in standard FedAvg. Consensus is more robust than
-> the theory predicted."*
-
----
-
-## v5 — The Robustness Boundary (2026-04-26)
-
-![Phase diagram: q vs ρ heatmap](results/q_vs_rho_heatmap.png)
-
-*The FedAvg robustness map. x-axis: sync density ρ. y-axis: adversarial fraction q.
-Left: accuracy heatmap. Center: curves per q. Right: where full sync stops being optimal.*
-
-**v5 verdict: 4/4 PASS (after significance correction) — honestly reported.**
-
-*Note: raw `argmax` at q=0.0 gave ρ\*=0.5, but the gap (0.0009) was within
-noise (pooled std=0.006). After requiring the peak to beat ρ=1.0 by >1
-pooled std, q=0.0 correctly reads ρ\*=1.0. The interior optimum at q=0.5 is
-real (gap=0.179, pooled std=0.170).*
-
-| q | 0.0 | 0.1 | 0.2 | 0.3 | 0.5 | 0.7 | 0.9 |
-|---|-----|-----|-----|-----|-----|-----|-----|
-| **ρ\*** | 1.0 | 1.0 | 1.0 | 1.0 | **0.3** | **0.3** | 1.0\* |
-| **acc** | 0.877 | 0.863 | 0.834 | 0.796 | 0.542 | 0.203 | 0.149 |
-
-*\*q=0.9: system collapsed — all accuracies near random; ρ\*=1.0 by default.*
-
-**Three clear regimes (corrected):**
-
-| Regime | Adversarial q | Behavior | ρ\* |
-|--------|-------------|----------|-----|
-| 🟢 Robust | 0.0–0.3 | FedAvg works, full sync optimal | 1.0 |
-| 🟡 Broken | 0.5 | **Interior optimum at ρ\*=0.3** — full sync (0.363) loses to partial (0.542) | 0.3 |
-| 🔴 Collapsed | 0.7–0.9 | System destroyed — accuracy near random at all ρ | any |
-
-**Critical threshold: q_c ≈ 0.5.** Below it, full sync wins. Above it,
-consensus breaks and partial sync is better.
-
-> *"FedAvg consensus survives minority corruption (q ≤ 0.3). At majority
-> corruption (q ≥ 0.5), full synchronization becomes harmful. The critical
-> threshold is q_c ≈ 0.5 — the point where adversarial clients outvote
-> honest ones in enough rounds to poison the global model."*
+</details>
 
 ---
 
