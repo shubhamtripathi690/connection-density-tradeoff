@@ -1,0 +1,8 @@
+{
+  "experiment": "v3.0 non-IID regime test (fixed FedAvg, same model as v2)",
+  "date": "2026-04-25",
+  "P1-v3": "FAIL — peak at rho=1.0 (boundary); interior optimum falsified across both IID and non-IID regimes",
+  "P2-v3": "PASS — full-sync accuracy under non-IID (0.701) is dramatically lower than IID low-noise (0.871)",
+  "P3-v3": "FAIL — peak rho* did not shift left; rho*=1.0 in both cases",
+  "net": "P1 is fully discarded. Class-distribution mismatch alone does not create an interior optimum in 10-round FedAvg with 10 clients. P2-v3 confirms non-IID is a harder regime — full sync hurts absolute accuracy (0.701 vs 0.871) but still dominates relatively."
+}

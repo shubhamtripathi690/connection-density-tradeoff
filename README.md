@@ -20,6 +20,26 @@ Right: communication cost is exactly linear while accuracy gain is sub-linear.*
 
 ---
 
+## v3 update — Non-IID regime (2026-04-25)
+
+![v2 IID vs v3 Non-IID comparison](results/v2_vs_v3_comparison.png)
+
+**v3 verdict: 1/3 PASS, 2/3 FAIL — honestly reported.**
+
+| ID | Prediction | Verdict | Evidence |
+|----|-----------|---------|----------|
+| **P1-v3** | Interior optimum in non-IID regime | ❌ **FAIL** | ρ\*=1.0 again — P1 fully discarded |
+| **P2-v3** | Full-sync accuracy lower in non-IID | ✅ **PASS** | 0.701 vs 0.871 (IID low noise) — 20% drop |
+| **P3-v3** | Peak ρ\* shifts left vs IID | ❌ **FAIL** | ρ\*=1.0 in both cases |
+
+> **What this means:** Class-distribution mismatch alone isn't enough to create an
+> interior optimum within 10 rounds of FedAvg. Full sync still wins — but it wins
+> with much lower absolute accuracy (0.701 vs 0.871). The framework correctly
+> predicted non-IID would be harder; it mis-predicted *where the optimum would land*.
+> P1 is now fully discarded, not just scoped.
+
+---
+
 ## The story
 
 ### 1 — The hypothesis
@@ -149,13 +169,17 @@ connection-density-tradeoff/
 │
 ├── src/
 │   ├── fed_experiment.py          ← IID experiment (v2.1)
-│   ├── fed_experiment_noniid.py   ← non-IID regime test (v3.0) ⬅ new
+│   ├── fed_experiment_noniid.py   ← non-IID regime test (v3.0)
+│   ├── compare_v2_v3.py           ← generates 4-panel comparison plot
 │   └── honest_sensitivity.py      ← simulation that falsified v1
 │
 ├── results/
-│   ├── fed_results.png            ← plot embedded above
-│   ├── raw_results.json           ← all (noise × ρ × seed) numbers
-│   └── verdicts.json              ← P1–P4 machine-readable verdicts
+│   ├── fed_results.png            ← v2 IID accuracy + comm-cost plot
+│   ├── raw_results.json           ← v2 IID raw numbers
+│   ├── verdicts.json              ← v2 P1–P4 verdicts
+│   ├── noniid_results.json        ← v3 non-IID raw numbers
+│   ├── noniid_verdicts.json       ← v3 P1–P3 verdicts
+│   └── v2_vs_v3_comparison.png   ← 4-panel comparison plot
 │
 ├── paper/
 │   ├── HONEST_PAPER.md            ← full paper v2.1 (with retraction §6)
@@ -190,15 +214,20 @@ connection-density-tradeoff/
 
 ## What's next
 
-1. **Non-IID regime test** (v3.0) — pre-registration locked in
-   [`prereg/PRE_REGISTRATION_v3.md`](prereg/PRE_REGISTRATION_v3.md).
-   Each client sees only 2 digit classes, making the diversity penalty γ much
-   larger. Theory predicts the interior optimum should reappear. Run it:
-   ```bash
-   cd src && python fed_experiment_noniid.py
-   ```
-2. **Adversarial clients** — a known fraction reports wrong labels on purpose.
-   Will be pre-registered before any data is touched.
+**v2 (IID):** 3/4 PASS · **v3 (non-IID class splits):** 1/3 PASS · P1 fully discarded.
+
+Two testable paths remain:
+
+1. **Adversarial clients (v4.0)** — a known fraction of clients send
+   deliberately wrong gradients. This is a fundamentally different diversity
+   source than class-distribution mismatch. Will be pre-registered before run.
+2. **Constrained-rounds test** — run v3 non-IID with 1–2 rounds instead of 5.
+   At very early training, models haven't converged to class-specific weights yet;
+   the diversity penalty may be visible in the transient. Exploratory, not
+   pre-registered.
+
+Both paths will follow the same methodology: lock predictions first, report
+failures as failures.
 
 ---
 

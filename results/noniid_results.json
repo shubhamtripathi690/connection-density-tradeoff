@@ -1,0 +1,46 @@
+{
+  "experiment": "non-IID regime test v3.0",
+  "date": "2026-04-25",
+  "setup": {
+    "clients": 10,
+    "digits_per_client": 2,
+    "rounds": 10,
+    "seeds": 3,
+    "samples_per_client": 1000,
+    "model": "SmallCNN (same as v2)",
+    "normalization": "mean=0.1307, std=0.3081",
+    "label_noise": 0.0
+  },
+  "results": [
+    {
+      "rho": 0.1,
+      "acc_mean": 0.19936666666666666,
+      "acc_std": 0.00896003472215494,
+      "comm": 10.0
+    },
+    {
+      "rho": 0.3,
+      "acc_mean": 0.4768666666666667,
+      "acc_std": 0.031510033675358456,
+      "comm": 30.0
+    },
+    {
+      "rho": 0.5,
+      "acc_mean": 0.4886,
+      "acc_std": 0.034754088488502595,
+      "comm": 50.0
+    },
+    {
+      "rho": 0.7,
+      "acc_mean": 0.6459666666666667,
+      "acc_std": 0.034156144721297556,
+      "comm": 70.0
+    },
+    {
+      "rho": 1.0,
+      "acc_mean": 0.7014,
+      "acc_std": 0.012492397688194193,
+      "comm": 100.0
+    }
+  ]
+}
