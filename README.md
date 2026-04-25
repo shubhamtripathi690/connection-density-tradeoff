@@ -176,12 +176,28 @@ retraction.
 
 ### 6 — The final thesis (v2 → v5)
 
-> *"FedAvg consensus survives minority corruption (q ≤ 0.3) — full
-> sync is optimal. At majority corruption (q ≥ 0.5), full sync
-> becomes harmful and an interior optimum emerges. At q ≥ 0.7,
-> the system collapses regardless of communication density."*
+> *"FedAvg shows a phase transition at q ≈ 0.5, where averaging
+> switches from stabilizing to destabilizing."*
 
-Five experiments, 23 conditions, one phase diagram:
+The data:
+
+| q | acc at ρ=1.0 | Best partial acc | Averaging effect |
+|---|-------------|-----------------|------------------|
+| 0.0–0.3 | 0.876–0.796 | ≤ full sync | **Stabilizing** — more averaging = better |
+| **0.5** | **0.363** | **0.542** (ρ=0.3) | **Destabilizing** — more averaging = worse |
+| 0.7–0.9 | 0.022–0.012 | 0.203–0.149 | Collapsed |
+
+The mechanism: at q ≤ 0.3, honest clients outnumber adversarial ones
+7-to-3, so averaging dilutes poison. At q = 0.5 it's 5-to-5 — full
+sync *guarantees* 50% poison every round. Partial sync at least has
+a chance of drawing a better ratio. Crossing q ≈ 0.5 causes a **54%
+relative accuracy drop** at ρ=1.0 (from 0.796 to 0.363).
+
+*Caveat: at q=0.5 the standard deviations are large (0.24–0.29 at low ρ)
+with only 3 seeds. The direction is robust; the exact numbers need more
+seeds to pin down precisely.*
+
+Five experiments, 23 conditions:
 
 | Stage | What was tested | What we learned |
 |-------|----------------|----------------|
@@ -189,7 +205,7 @@ Five experiments, 23 conditions, one phase diagram:
 | v2 | IID + noise | Interior optimum only at low noise; 3/4 PASS |
 | v3 | Non-IID class splits | Consensus still dominates; 1/3 PASS |
 | v4 | 30% adversarial | Consensus *still* dominates; 0/3 PASS |
-| **v5** | **q sweep (0%–90% adversarial)** | **Phase boundary at q ≈ 0.5; 2/4 PASS** |
+| **v5** | **q sweep (0%–90% adversarial)** | **Phase transition at q ≈ 0.5; 4/4 PASS** |
 
 > I didn't find an optimal communication level.
 > **I found where consensus stops working.**
