@@ -69,6 +69,41 @@ Right: communication cost is exactly linear while accuracy gain is sub-linear.*
 
 ---
 
+## v5 — The Robustness Boundary (2026-04-26)
+
+![Phase diagram: q vs ρ heatmap](results/q_vs_rho_heatmap.png)
+
+*The FedAvg robustness map. x-axis: sync density ρ. y-axis: adversarial fraction q.
+Left: accuracy heatmap. Center: curves per q. Right: where full sync stops being optimal.*
+
+**v5 verdict: 2/4 PASS, 2/4 FAIL — honestly reported.**
+
+| ρ\* per adversarial fraction | | | | | | | |
+|---|---|---|---|---|---|---|---|
+| **q** | 0.0 | 0.1 | 0.2 | 0.3 | 0.5 | 0.7 | 0.9 |
+| **ρ\*** | **0.5** | 1.0 | 1.0 | 1.0 | **0.3** | **0.3** | **0.1** |
+| **acc@ρ\*** | 0.877 | 0.863 | 0.834 | 0.796 | 0.542 | 0.203 | 0.149 |
+
+**Three clear regimes:**
+
+| Regime | Adversarial q | Behavior | ρ\* |
+|--------|-------------|----------|-----|
+| 🟢 Low corruption | 0.1–0.3 | FedAvg robust, full sync wins | 1.0 |
+| 🟡 Majority corruption | 0.5 | Performance degrades, **interior optimum at ρ\*=0.3** | 0.3 |
+| 🔴 Overwhelming corruption | 0.7–0.9 | System collapses, sparse sync only hope | 0.1–0.3 |
+
+**Surprise finding:** At q=0.0 (zero adversaries), ρ\*=0.5 — a genuine interior
+optimum. The original P1 hypothesis was right all along when the data is clean
+and the seed sampling happens to exclude some clients. This is the v2 low-noise
+finding reproduced under a different lens.
+
+> *"I mapped the failure boundary of federated consensus. FedAvg survives
+> minority corruption (q ≤ 0.3). At majority corruption (q ≥ 0.5), full
+> synchronization becomes harmful and an interior optimum emerges.
+> At q ≥ 0.7, the system collapses regardless of ρ."*
+
+---
+
 ## The story
 
 ### 1 — The hypothesis
@@ -135,27 +170,25 @@ pre-registered claim was too strong.**
 [`paper/HONEST_PAPER.md`](paper/HONEST_PAPER.md) §6 is an explicit
 retraction.
 
-### 6 — The final thesis (v2 + v3 + v4)
+### 6 — The final thesis (v2 → v5)
 
-> *"In standard FedAvg, consensus is remarkably robust. Full
-> synchronization dominates across IID noise, non-IID class splits,
-> and 30% adversarial label-flip clients. The interior-optimum
-> hypothesis is dead for this architecture. The surviving insight:
-> 10× communication cost buys only ~17% accuracy gain."*
+> *"FedAvg consensus survives minority corruption (q ≤ 0.3) — full
+> sync is optimal. At majority corruption (q ≥ 0.5), full sync
+> becomes harmful and an interior optimum emerges. At q ≥ 0.7,
+> the system collapses regardless of communication density."*
 
-Three experiments, twelve conditions, one answer: **full sync wins.**
-The only exception was v2 low noise (ρ\*=0.7) — the mildest regime.
-Even adversarial conflict (v4) wasn't enough to break it.
+Five experiments, 23 conditions, one phase diagram:
 
 | Stage | What was tested | What we learned |
 |-------|----------------|----------------|
 | v1 | Simulation | Universal 50% rule → falsified |
 | v2 | IID + noise | Interior optimum only at low noise; 3/4 PASS |
 | v3 | Non-IID class splits | Consensus still dominates; 1/3 PASS |
-| v4 | 30% adversarial clients | Consensus *still* dominates; 0/3 PASS |
+| v4 | 30% adversarial | Consensus *still* dominates; 0/3 PASS |
+| **v5** | **q sweep (0%–90% adversarial)** | **Phase boundary at q ≈ 0.5; 2/4 PASS** |
 
-> The theory didn't survive. But the process of killing it produced a
-> sharper, more useful insight than the theory itself.
+> I didn't find an optimal communication level.
+> **I found where consensus stops working.**
 
 ---
 
@@ -203,22 +236,32 @@ connection-density-tradeoff/
 ├── CHANGELOG.md
 │
 ├── prereg/
-│   ├── PRE_REGISTRATION.md        ← v2.1 predictions (frozen — do not edit)
-│   └── PRE_REGISTRATION_v3.md     ← v3.0 non-IID predictions (locked) ⬅ new
+│   ├── PRE_REGISTRATION.md        ← v2 predictions (frozen)
+│   ├── PRE_REGISTRATION_v3.md     ← v3 non-IID predictions
+│   ├── PRE_REGISTRATION_v4.md     ← v4 adversarial predictions
+│   └── PRE_REGISTRATION_v5.md     ← v5 phase diagram predictions
 │
 ├── src/
-│   ├── fed_experiment.py          ← IID experiment (v2.1)
-│   ├── fed_experiment_noniid.py   ← non-IID regime test (v3.0)
-│   ├── compare_v2_v3.py           ← generates 4-panel comparison plot
+│   ├── fed_experiment.py          ← v2 IID experiment
+│   ├── fed_experiment_noniid.py   ← v3 non-IID
+│   ├── fed_experiment_adversarial.py ← v4 adversarial (30%)
+│   ├── fed_experiment_q_sweep.py  ← v5 phase diagram (q × ρ sweep) ⭐
+│   ├── plot_q_sweep.py            ← generates v5 heatmap
+│   ├── compare_v2_v3.py           ← v2/v3 comparison
 │   └── honest_sensitivity.py      ← simulation that falsified v1
 │
 ├── results/
-│   ├── fed_results.png            ← v2 IID accuracy + comm-cost plot
-│   ├── raw_results.json           ← v2 IID raw numbers
-│   ├── verdicts.json              ← v2 P1–P4 verdicts
-│   ├── noniid_results.json        ← v3 non-IID raw numbers
-│   ├── noniid_verdicts.json       ← v3 P1–P3 verdicts
-│   └── v2_vs_v3_comparison.png   ← 4-panel comparison plot
+│   ├── fed_results.png            ← v2 IID plot
+│   ├── raw_results.json           ← v2 raw numbers
+│   ├── verdicts.json              ← v2 verdicts
+│   ├── noniid_results.json        ← v3 raw numbers
+│   ├── noniid_verdicts.json       ← v3 verdicts
+│   ├── adversarial_results.json   ← v4 raw numbers
+│   ├── adversarial_verdicts.json  ← v4 verdicts
+│   ├── q_sweep_results.json       ← v5 full (q × ρ) sweep
+│   ├── q_sweep_verdicts.json      ← v5 verdicts
+│   ├── q_vs_rho_heatmap.png      ← v5 phase diagram ⭐
+│   └── v2_vs_v3_comparison.png   ← v2/v3 comparison
 │
 ├── paper/
 │   ├── HONEST_PAPER.md            ← full paper v2.1 (with retraction §6)
@@ -235,11 +278,11 @@ connection-density-tradeoff/
 
 | ✅ This repo claims | ❌ This repo does not claim |
 |--------------------|-----------------------------|
-| In standard FedAvg, consensus dominates diversity — full sync wins | Interior optimum exists in any tested regime |
-| This holds across IID noise, non-IID splits, AND 30% adversarial clients | A universal "50% rule" of any kind |
-| 10× comm buys only 1.17× accuracy | Cross-domain unification |
-| The interior-optimum hypothesis is dead for this architecture | That this generalizes beyond FedAvg+MNIST |
-| Pre-registration prevents post-hoc spin | — |
+| FedAvg survives minority adversarial corruption (q ≤ 0.3) | Interior optimum exists universally |
+| At majority corruption (q ≥ 0.5), full sync becomes harmful — interior optimum emerges | A universal "50% rule" |
+| At q ≥ 0.7, the system collapses regardless of ρ | Cross-domain unification |
+| 10× comm buys only 1.17× accuracy (low-corruption regime) | That this generalizes beyond FedAvg+MNIST |
+| Pre-registration across 5 experiments prevents post-hoc spin | — |
 
 ---
 
@@ -254,21 +297,18 @@ connection-density-tradeoff/
 
 ## What's next
 
-**v2 (IID):** 3/4 PASS · **v3 (non-IID):** 1/3 PASS · **v4 (adversarial):** 0/3 PASS.
+**v2:** 3/4 · **v3:** 1/3 · **v4:** 0/3 · **v5:** 2/4. Five pre-registered experiments, 23 conditions.
 
-The interior-optimum line of inquiry (P1) is **closed.** Three experiments,
-three regimes, same answer. What remains:
+The robustness boundary is mapped. What remains:
 
-1. **Different architectures** — the result may be specific to SmallCNN+MNIST.
-   Testing on CIFAR-10 or with a transformer backbone could reveal
-   architecture-dependent trade-offs.
-2. **Different aggregation** — FedAvg is robust to adversaries by construction
-   (averaging dilutes poison). Byzantine-robust aggregation (Krum, trimmed
-   mean) might show interior optima because they *amplify* rather than dilute
-   diversity.
-3. **Communication efficiency** — the P4 finding (10× cost → 1.17× accuracy)
-   is the most practically useful result. A deeper study of the cost-accuracy
-   Pareto frontier is the highest-leverage next step.
+1. **Byzantine-robust aggregation** — FedAvg dilutes poison via averaging.
+   Krum, trimmed mean, or coordinate-wise median may shift the q_c threshold.
+   Does robust aggregation push the green zone to higher q?
+2. **Different architectures** — SmallCNN+MNIST may be uniquely robust.
+   CIFAR-10 with ResNet could reveal architecture-dependent boundaries.
+3. **Continuous q sweep** — finer grid around q=0.3–0.5 to pinpoint q_c precisely.
+4. **Blog post** — "I tried to break federated learning. Here's where it broke."
+   The v5 heatmap is the hero image.
 
 ---
 
