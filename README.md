@@ -144,10 +144,12 @@ connection-density-tradeoff/
 ├── CHANGELOG.md
 │
 ├── prereg/
-│   └── PRE_REGISTRATION.md        ← locked predictions (frozen — do not edit)
+│   ├── PRE_REGISTRATION.md        ← v2.1 predictions (frozen — do not edit)
+│   └── PRE_REGISTRATION_v3.md     ← v3.0 non-IID predictions (locked) ⬅ new
 │
 ├── src/
-│   ├── fed_experiment.py          ← main experiment
+│   ├── fed_experiment.py          ← IID experiment (v2.1)
+│   ├── fed_experiment_noniid.py   ← non-IID regime test (v3.0) ⬅ new
 │   └── honest_sensitivity.py      ← simulation that falsified v1
 │
 ├── results/
@@ -188,10 +190,15 @@ connection-density-tradeoff/
 
 ## What's next
 
-1. **Non-IID regime test** (pre-registration v3.0, not yet run) — each client sees only 2 digit classes, making diversity penalty γ much larger. Theory predicts the interior optimum should reappear here.
+1. **Non-IID regime test** (v3.0) — pre-registration locked in
+   [`prereg/PRE_REGISTRATION_v3.md`](prereg/PRE_REGISTRATION_v3.md).
+   Each client sees only 2 digit classes, making the diversity penalty γ much
+   larger. Theory predicts the interior optimum should reappear. Run it:
+   ```bash
+   cd src && python fed_experiment_noniid.py
+   ```
 2. **Adversarial clients** — a known fraction reports wrong labels on purpose.
-
-Both will be pre-registered before any data is touched.
+   Will be pre-registered before any data is touched.
 
 ---
 
