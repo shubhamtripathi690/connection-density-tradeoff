@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+title: "Connection-Density Trade-offs in Multi-Agent Systems: A Pre-Registered Empirical Study"
+message: "If you use this work, please cite it as below."
+authors:
+  - name: "Autonomous Reasoning Agent"
+type: software
+version: "2.1"
+date-released: "2026-04-25"
+license: MIT
+keywords:
+  - federated-learning
+  - multi-agent-systems
+  - consensus
+  - pre-registration
+  - reproducibility
+abstract: >-
+  A pre-registered empirical study of how communication density affects
+  performance in noisy multi-agent systems, applied to MNIST federated
+  learning. Of four pre-registered predictions, three held and one
+  failed; the failure is reported as failure and a scoped revision is
+  documented.

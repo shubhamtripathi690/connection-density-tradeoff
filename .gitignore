@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Datasets (downloaded by torchvision; do not commit)
+src/data/
+data/
+**/MNIST/
+
+# Build / dist
+build/
+dist/
+*.egg
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Local outputs we DO want to keep are explicitly tracked under results/
+# Anything else generated locally should not be committed
+*.log
+*.tmp
