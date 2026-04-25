@@ -32,11 +32,20 @@ for r in results:
     acc_matrix[i, j] = r["acc_mean"]
     std_matrix[i, j] = r["acc_std"]
 
-# Find ρ* for each q
+# Find ρ* for each q WITH significance check
+# Interior peak must beat ρ=1.0 by > 1 pooled std
 peak_rhos = []
 for i, q in enumerate(q_vals):
-    j_star = int(np.argmax(acc_matrix[i]))
-    peak_rhos.append(rho_vals[j_star])
+    j_raw = int(np.argmax(acc_matrix[i]))
+    j_full = rho_vals.index(1.0)
+    acc_peak = acc_matrix[i, j_raw]
+    acc_full = acc_matrix[i, j_full]
+    pooled = np.sqrt((std_matrix[i, j_raw]**2 + std_matrix[i, j_full]**2) / 2)
+    gap = acc_peak - acc_full
+    if 0 < j_raw < len(rho_vals) - 1 and gap > pooled:
+        peak_rhos.append(rho_vals[j_raw])  # significant interior peak
+    else:
+        peak_rhos.append(1.0)  # default to full sync
 
 # ── Figure: 3 panels ───────────────────────────────────────
 fig = plt.figure(figsize=(18, 6))

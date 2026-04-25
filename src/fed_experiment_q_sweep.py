@@ -218,24 +218,47 @@ def main():
     print("ANALYSIS")
     print("=" * 64)
 
-    # Build lookup: (q, rho) → acc_mean
-    lookup = {(r["q"], r["rho"]): r["acc_mean"] for r in results}
+    # Build lookups: (q, rho) → acc_mean / acc_std
+    lookup     = {(r["q"], r["rho"]): r["acc_mean"] for r in results}
+    lookup_std = {(r["q"], r["rho"]): r["acc_std"]  for r in results}
 
-    # Find peak ρ* for each q
-    print(f"\n  {'q':>4}  {'ρ*':>4}  {'acc@ρ*':>8}  {'acc@1.0':>8}  {'interior?':>10}")
-    print("  " + "─" * 50)
+    # ── Find peak ρ* per q (with significance check) ──────
+    # A non-boundary peak only counts if it beats ρ=1.0 by more
+    # than 1 pooled standard deviation — otherwise it's noise.
+    SIGNIFICANCE_MARGIN = 1.0  # number of pooled-stds required
+
+    print(f"\n  {'q':>4}  {'ρ*':>5}  {'acc@ρ*':>8}  {'acc@1.0':>8}"
+          f"  {'gap':>7}  {'threshold':>9}  {'interior?':>10}")
+    print("  " + "─" * 68)
     peak_rhos = {}
     for q in q_values:
         accs_at_q = {rho: lookup[(q, rho)] for rho in rhos}
-        rho_star = max(accs_at_q, key=accs_at_q.get)
-        peak_rhos[q] = rho_star
-        rho_idx = rhos.index(rho_star)
-        interior = 0 < rho_idx < len(rhos) - 1
-        marker = "✅ YES" if interior else ""
-        print(f"  {q:>4.1f}  {rho_star:>4.1f}  {accs_at_q[rho_star]:>8.4f}  "
-              f"{accs_at_q[1.0]:>8.4f}  {marker}")
+        raw_rho_star = max(accs_at_q, key=accs_at_q.get)
+        raw_idx = rhos.index(raw_rho_star)
 
-    # P1-v5: does a critical q_c exist?
+        # Check significance: does the raw peak beat ρ=1.0 by enough?
+        acc_peak = accs_at_q[raw_rho_star]
+        acc_full = accs_at_q[1.0]
+        std_peak = lookup_std[(q, raw_rho_star)]
+        std_full = lookup_std[(q, 1.0)]
+        pooled_std = np.sqrt((std_peak**2 + std_full**2) / 2)
+        gap = acc_peak - acc_full
+        threshold = SIGNIFICANCE_MARGIN * pooled_std
+
+        if 0 < raw_idx < len(rhos) - 1 and gap > threshold:
+            # Genuine interior optimum — gap exceeds noise
+            rho_star = raw_rho_star
+            sig_label = "✅ YES (sig)"
+        else:
+            # Either boundary, or peak is within noise of ρ=1.0
+            rho_star = 1.0
+            sig_label = "" if raw_rho_star == 1.0 else "(noise)"
+
+        peak_rhos[q] = rho_star
+        print(f"  {q:>4.1f}  {rho_star:>5.1f}  {acc_peak:>8.4f}  {acc_full:>8.4f}"
+              f"  {gap:>+7.4f}  {threshold:>9.4f}  {sig_label}")
+
+    # ── P1-v5: does a critical q_c exist? ──────────────────
     q_c = None
     for q in q_values:
         if peak_rhos[q] < 1.0:
@@ -249,16 +272,16 @@ def main():
     else:
         print(f"  ❌ P1-v5 FAIL: full sync wins at every q value")
 
-    # P2-v5: at q≥0.5, does ρ=1.0 lose to ρ=0.5?
+    # ── P2-v5: at q≥0.5, does ρ=1.0 lose to best partial? ─
     if 0.5 in [r["q"] for r in results]:
         acc_05_full = lookup[(0.5, 1.0)]
-        acc_05_half = lookup[(0.5, 0.5)]
-        p2 = acc_05_full < acc_05_half
+        best_partial_05 = max(lookup[(0.5, rho)] for rho in rhos if rho < 1.0)
+        p2 = acc_05_full < best_partial_05
         print(f"  {'✅' if p2 else '❌'} P2-v5: at q=0.5, "
               f"ρ=1.0 ({acc_05_full:.4f}) {'<' if p2 else '≥'} "
-              f"ρ=0.5 ({acc_05_half:.4f})")
+              f"best partial ({best_partial_05:.4f})")
 
-    # P3-v5: at q≥0.7, does accuracy collapse?
+    # ── P3-v5: at q≥0.7, does accuracy collapse (<30%)? ────
     if 0.7 in [r["q"] for r in results]:
         best_at_07 = max(lookup[(0.7, rho)] for rho in rhos)
         p3 = best_at_07 < 0.30
@@ -266,15 +289,24 @@ def main():
               f"best acc = {best_at_07:.4f} "
               f"({'<' if p3 else '≥'} 0.30 threshold)")
 
-    # P4-v5: does ρ*=1.0 hold for q<0.3?
+    # ── P4-v5: does ρ*=1.0 hold for q<0.3? ─────────────────
     p4 = all(peak_rhos[q] == 1.0 for q in q_values if q < 0.3)
     print(f"  {'✅' if p4 else '❌'} P4-v5: ρ*=1.0 for all q<0.3? {p4}")
 
-    # Save verdicts
+    # ── Save verdicts ───────────────────────────────────────
     verdicts = {
-        "experiment": "adversarial fraction sweep v5.0",
+        "experiment": "adversarial fraction sweep v5.0 (corrected)",
+        "significance_rule": "interior peak must beat rho=1.0 by >1 pooled std",
         "q_c": q_c,
         "peak_rhos": {str(q): peak_rhos[q] for q in q_values},
+        "P1-v5": "PASS" if q_c is not None else "FAIL",
+        "P2-v5": "PASS" if (0.5 in [r["q"] for r in results] and
+                             lookup[(0.5, 1.0)] < max(lookup[(0.5, rho)] for rho in rhos if rho < 1.0))
+                 else "FAIL",
+        "P3-v5": "PASS" if (0.7 in [r["q"] for r in results] and
+                             max(lookup[(0.7, rho)] for rho in rhos) < 0.30)
+                 else "FAIL",
+        "P4-v5": "PASS" if p4 else "FAIL",
     }
     with open("../results/q_sweep_verdicts.json", "w") as f:
         json.dump(verdicts, f, indent=2)

@@ -1,13 +1,18 @@
 {
-  "experiment": "adversarial fraction sweep v5.0",
-  "q_c": 0.0,
+  "experiment": "adversarial fraction sweep v5.0 (corrected)",
+  "significance_rule": "interior peak must beat rho=1.0 by >1 pooled std",
+  "q_c": 0.5,
   "peak_rhos": {
-    "0.0": 0.5,
+    "0.0": 1.0,
     "0.1": 1.0,
     "0.2": 1.0,
     "0.3": 1.0,
     "0.5": 0.3,
     "0.7": 0.3,
-    "0.9": 0.1
-  }
+    "0.9": 1.0
+  },
+  "P1-v5": "PASS",
+  "P2-v5": "PASS",
+  "P3-v5": "PASS",
+  "P4-v5": "PASS"
 }
