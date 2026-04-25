@@ -1,0 +1,9 @@
+{
+  "experiment": "adversarial clients v4.0",
+  "P1-v4": "FAIL",
+  "P2-v4": "FAIL",
+  "P3-v4": "FAIL",
+  "peak_rho": 1.0,
+  "acc_at_peak": 0.7908,
+  "acc_at_full_sync": 0.7908
+}

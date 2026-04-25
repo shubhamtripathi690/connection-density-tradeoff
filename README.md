@@ -40,6 +40,35 @@ Right: communication cost is exactly linear while accuracy gain is sub-linear.*
 
 ---
 
+## v4 update — Adversarial clients (2026-04-25)
+
+![v4 adversarial results](results/adversarial_results.png)
+
+**v4 verdict: 0/3 PASS, 3/3 FAIL — honestly reported.**
+
+| ID | Prediction | Verdict | Evidence |
+|----|-----------|---------|----------|
+| **P1-v4** | Interior optimum with adversarial clients | ❌ **FAIL** | ρ\*=1.0 still the peak (acc=0.791) |
+| **P2-v4** | Peak ρ\* < 1.0 | ❌ **FAIL** | Peak is at boundary |
+| **P3-v4** | Full sync accuracy < partial sync | ❌ **FAIL** | ρ=1.0 (0.791) > ρ=0.7 (0.737) |
+
+> **What this means:** Even with 30% of clients sending actively conflicting
+> gradients (all labels flipped), FedAvg's averaging still dilutes the poison
+> enough that full sync wins. The interior-optimum hypothesis is **conclusively
+> dead** across noise (v2), heterogeneity (v3), and adversarial conflict (v4).
+
+| Experiment | Conditions | Interior optimum? |
+|-----------|-----------|-------------------|
+| v2 (IID + noise) | 3 noise levels × 5 ρ | Only at low noise (ρ\*=0.7) |
+| v3 (non-IID class splits) | 10 clients × 5 ρ | ❌ No |
+| v4 (30% adversarial) | 10 clients × 5 ρ | ❌ No |
+
+> *"I showed that neither heterogeneity nor adversarial conflict is sufficient
+> to penalize communication in standard FedAvg. Consensus is more robust than
+> the theory predicted."*
+
+---
+
 ## The story
 
 ### 1 — The hypothesis
@@ -106,25 +135,27 @@ pre-registered claim was too strong.**
 [`paper/HONEST_PAPER.md`](paper/HONEST_PAPER.md) §6 is an explicit
 retraction.
 
-### 6 — The revised thesis (v2 + v3 combined)
+### 6 — The final thesis (v2 + v3 + v4)
 
-> *"In standard federated learning setups, consensus benefits dominate
-> diversity penalties even under significant data heterogeneity. Optimal
-> connectivity remains at full synchronization unless agents produce
-> conflicting or adversarial updates."*
+> *"In standard FedAvg, consensus is remarkably robust. Full
+> synchronization dominates across IID noise, non-IID class splits,
+> and 30% adversarial label-flip clients. The interior-optimum
+> hypothesis is dead for this architecture. The surviving insight:
+> 10× communication cost buys only ~17% accuracy gain."*
 
-Two experiments, seven conditions, same answer: **full sync wins.**
-The only exception was v2-low-noise (ρ\*=0.7), where the diversity
-penalty was just barely detectable. Non-IID class splits (v3) weren't
-enough to change this — they made the problem harder (0.701 vs 0.871)
-but didn't move the optimum.
+Three experiments, twelve conditions, one answer: **full sync wins.**
+The only exception was v2 low noise (ρ\*=0.7) — the mildest regime.
+Even adversarial conflict (v4) wasn't enough to break it.
 
-Practical takeaway (P4): **10× the bandwidth buys only 17% more
-accuracy.** That ratio matters for real federated system design.
+| Stage | What was tested | What we learned |
+|-------|----------------|----------------|
+| v1 | Simulation | Universal 50% rule → falsified |
+| v2 | IID + noise | Interior optimum only at low noise; 3/4 PASS |
+| v3 | Non-IID class splits | Consensus still dominates; 1/3 PASS |
+| v4 | 30% adversarial clients | Consensus *still* dominates; 0/3 PASS |
 
-> A clean 4/4 pass would have been suspicious. This 3/4 + 1/3 across
-> two experiments, with honest retractions, is what calibrated science
-> looks like.
+> The theory didn't survive. But the process of killing it produced a
+> sharper, more useful insight than the theory itself.
 
 ---
 
@@ -204,10 +235,10 @@ connection-density-tradeoff/
 
 | ✅ This repo claims | ❌ This repo does not claim |
 |--------------------|-----------------------------|
-| In standard FedAvg, consensus dominates diversity — full sync wins | Interior optimum exists at every noise level |
-| ρ\* is system-specific, not universal | A universal "50% rule" of any kind |
-| 10× comm buys only 1.17× accuracy in this regime | Cross-domain unification |
-| Interior optimum may emerge under adversarial agents (untested) | That non-IID class splits alone are enough |
+| In standard FedAvg, consensus dominates diversity — full sync wins | Interior optimum exists in any tested regime |
+| This holds across IID noise, non-IID splits, AND 30% adversarial clients | A universal "50% rule" of any kind |
+| 10× comm buys only 1.17× accuracy | Cross-domain unification |
+| The interior-optimum hypothesis is dead for this architecture | That this generalizes beyond FedAvg+MNIST |
 | Pre-registration prevents post-hoc spin | — |
 
 ---
@@ -223,20 +254,21 @@ connection-density-tradeoff/
 
 ## What's next
 
-**v2 (IID):** 3/4 PASS · **v3 (non-IID class splits):** 1/3 PASS · P1 fully discarded.
+**v2 (IID):** 3/4 PASS · **v3 (non-IID):** 1/3 PASS · **v4 (adversarial):** 0/3 PASS.
 
-Two testable paths remain:
+The interior-optimum line of inquiry (P1) is **closed.** Three experiments,
+three regimes, same answer. What remains:
 
-1. **Adversarial clients (v4.0)** — a known fraction of clients send
-   deliberately wrong gradients. This is a fundamentally different diversity
-   source than class-distribution mismatch. Will be pre-registered before run.
-2. **Constrained-rounds test** — run v3 non-IID with 1–2 rounds instead of 5.
-   At very early training, models haven't converged to class-specific weights yet;
-   the diversity penalty may be visible in the transient. Exploratory, not
-   pre-registered.
-
-Both paths will follow the same methodology: lock predictions first, report
-failures as failures.
+1. **Different architectures** — the result may be specific to SmallCNN+MNIST.
+   Testing on CIFAR-10 or with a transformer backbone could reveal
+   architecture-dependent trade-offs.
+2. **Different aggregation** — FedAvg is robust to adversaries by construction
+   (averaging dilutes poison). Byzantine-robust aggregation (Krum, trimmed
+   mean) might show interior optima because they *amplify* rather than dilute
+   diversity.
+3. **Communication efficiency** — the P4 finding (10× cost → 1.17× accuracy)
+   is the most practically useful result. A deeper study of the cost-accuracy
+   Pareto frontier is the highest-leverage next step.
 
 ---
 

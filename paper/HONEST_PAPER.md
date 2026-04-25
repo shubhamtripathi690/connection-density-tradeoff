@@ -108,11 +108,24 @@ Pre-registered federated learning test on MNIST (10 clients, 3 seeds):
 | medium (20%)| 1.0      | ❌ boundary |
 | high (40%)  | 1.0      | ❌ boundary |
 
-**Conclusion:** ρ\* = 0.5 is an artifact of symmetric coefficients.
-Interior optima exist only when β/γ is moderate. **In high-β/γ
-regimes, the boundary wins.**
+### v3.0 Non-IID Result
 
-Full numbers and analysis: [paper/RESULTS_REPORT.md](RESULTS_REPORT.md).
+| Setup | Peak ρ\* | Interior? |
+|-------|----------|----------|
+| 2 classes/client (non-IID) | 1.0 | ❌ boundary |
+
+### v4.0 Adversarial Result
+
+| Setup | Peak ρ\* | Interior? |
+|-------|----------|----------|
+| 30% clients label-flipped | 1.0 | ❌ boundary |
+
+**Conclusion across v2/v3/v4:** The interior-optimum hypothesis is
+dead for SmallCNN + MNIST + FedAvg. Full sync wins across IID noise,
+non-IID class splits, and 30% adversarial clients. The surviving
+insight is the communication cost ratio (P4).
+
+Full numbers: [RESULTS_REPORT.md](RESULTS_REPORT.md).
 
 ---
 
@@ -158,12 +171,26 @@ Of the three v3 predictions: P1-v3 FAIL, P2-v3 PASS, P3-v3 FAIL.
 > synchronization unless agents produce conflicting or adversarial
 > updates."*
 
-This is a stronger, more specific claim than the v2.1 revision.
-It is falsifiable: an adversarial-client experiment where the
-interior optimum reappears would rehabilitate a scoped version
-of P1.
+### v4.0 RETRACTION (adversarial hypothesis falsified)
 
-Both retractions were made before any post-hoc parameter tuning,
+The v4 adversarial experiment (30% of clients have all labels
+flipped: y → 9−y) was the strongest test of the diversity-penalty
+hypothesis. Result: **ρ\* = 1.0 again. 0/3 predictions passed.**
+Full sync (0.791) still beat partial sync (0.737 at ρ=0.7).
+
+The interior-optimum hypothesis is now conclusively dead for
+SmallCNN + MNIST + FedAvg across all three diversity sources
+tested: noise, class heterogeneity, and adversarial conflict.
+
+**Final thesis (post v2 + v3 + v4):**
+
+> *"In standard FedAvg, consensus is remarkably robust. Full
+> synchronization dominates even with 30% adversarial clients.
+> The interior-optimum hypothesis does not hold for this
+> architecture. The surviving practical insight: 10× communication
+> cost buys only ~17% accuracy gain."*
+
+All retractions were made before any post-hoc parameter tuning,
 in accordance with the pre-registration commitments.
 
 ---
@@ -200,19 +227,27 @@ non-IID MNIST experiments fall in this regime.
 
 ## 9. Conclusion
 
-> *"In standard federated learning setups, consensus benefits dominate
-> diversity penalties even under significant data heterogeneity.
-> Optimal connectivity remains at full synchronization unless agents
-> produce conflicting or adversarial updates."*
+> *"In standard FedAvg with SmallCNN on MNIST, consensus is remarkably
+> robust. Full synchronization dominates across IID noise, non-IID class
+> splits, and 30% adversarial label-flip clients. The interior-optimum
+> hypothesis is dead for this architecture. The surviving insight: 10×
+> communication cost buys only ~17% accuracy gain."*
 
-Two pre-registered experiments (v2: IID + noise, v3: non-IID class
-splits), seven conditions total. Full sync won in six of seven.
-The one interior optimum (v2 low noise, ρ\*=0.7) was the mildest
-regime tested.
+Three pre-registered experiments, twelve conditions total. Full sync
+won in eleven of twelve. The one interior optimum (v2 low noise,
+ρ\*=0.7) was the mildest regime tested.
+
+| Experiment | Tested | Verdicts |
+|-----------|--------|----------|
+| v2 IID + noise | 3 noise × 5 ρ | 3/4 PASS (P1 failed) |
+| v3 non-IID | 5 ρ | 1/3 PASS (P1 & P3 failed) |
+| v4 adversarial | 5 ρ | 0/3 PASS (all failed) |
 
 Less exciting than v1's "50% universal rule." Less exciting than
-v2.0's "interior optimum exists." But supported by data from both
-sides of the IID/non-IID divide.
+v2's "interior optimum exists." Less exciting than v4's "adversarial
+clients break consensus." But true — and the process of systematic
+falsification produced a sharper insight than any of the theories
+it killed.
 
 ---
 

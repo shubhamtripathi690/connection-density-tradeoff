@@ -1,0 +1,46 @@
+{
+  "experiment": "adversarial clients v4.0",
+  "date": "2026-04-25",
+  "setup": {
+    "clients": 10,
+    "adversarial_clients": 3,
+    "adversarial_type": "label flip (y \u2192 9\u2212y)",
+    "rounds": 10,
+    "seeds": 3,
+    "samples_per_client": 1000,
+    "model": "SmallCNN (same as v2/v3)",
+    "normalization": "mean=0.1307, std=0.3081"
+  },
+  "results": [
+    {
+      "rho": 0.1,
+      "acc_mean": 0.4296333333333333,
+      "acc_std": 0.2506200488566086,
+      "comm": 10.0
+    },
+    {
+      "rho": 0.3,
+      "acc_mean": 0.6204999999999999,
+      "acc_std": 0.2754893948352035,
+      "comm": 30.0
+    },
+    {
+      "rho": 0.5,
+      "acc_mean": 0.4397333333333333,
+      "acc_std": 0.25311763185435254,
+      "comm": 50.0
+    },
+    {
+      "rho": 0.7,
+      "acc_mean": 0.7369666666666667,
+      "acc_std": 0.08970634809693732,
+      "comm": 70.0
+    },
+    {
+      "rho": 1.0,
+      "acc_mean": 0.7908,
+      "acc_std": 0.02265347655438341,
+      "comm": 100.0
+    }
+  ]
+}
