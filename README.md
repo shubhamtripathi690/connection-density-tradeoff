@@ -106,17 +106,25 @@ pre-registered claim was too strong.**
 [`paper/HONEST_PAPER.md`](paper/HONEST_PAPER.md) §6 is an explicit
 retraction.
 
-### 6 — The insight
+### 6 — The revised thesis (v2 + v3 combined)
 
-> *"When β/γ is large, full synchronization wins. An interior optimum
-> only exists in the moderate-β/γ regime. Measure it first — don't
-> assume ρ\*."*
+> *"In standard federated learning setups, consensus benefits dominate
+> diversity penalties even under significant data heterogeneity. Optimal
+> connectivity remains at full synchronization unless agents produce
+> conflicting or adversarial updates."*
+
+Two experiments, seven conditions, same answer: **full sync wins.**
+The only exception was v2-low-noise (ρ\*=0.7), where the diversity
+penalty was just barely detectable. Non-IID class splits (v3) weren't
+enough to change this — they made the problem harder (0.701 vs 0.871)
+but didn't move the optimum.
 
 Practical takeaway (P4): **10× the bandwidth buys only 17% more
 accuracy.** That ratio matters for real federated system design.
 
-> A 4/4 pass would have been suspicious. 0/4 would be a refutation.
-> **3/4 with one honest retraction is what calibrated science looks like.**
+> A clean 4/4 pass would have been suspicious. This 3/4 + 1/3 across
+> two experiments, with honest retractions, is what calibrated science
+> looks like.
 
 ---
 
@@ -196,9 +204,10 @@ connection-density-tradeoff/
 
 | ✅ This repo claims | ❌ This repo does not claim |
 |--------------------|-----------------------------|
-| Interior optima *can* exist when β/γ is moderate | Interior optimum exists at every noise level |
+| In standard FedAvg, consensus dominates diversity — full sync wins | Interior optimum exists at every noise level |
 | ρ\* is system-specific, not universal | A universal "50% rule" of any kind |
 | 10× comm buys only 1.17× accuracy in this regime | Cross-domain unification |
+| Interior optimum may emerge under adversarial agents (untested) | That non-IID class splits alone are enough |
 | Pre-registration prevents post-hoc spin | — |
 
 ---

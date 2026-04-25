@@ -116,14 +116,19 @@ Full numbers and analysis: [paper/RESULTS_REPORT.md](RESULTS_REPORT.md).
 
 ---
 
-## 5. What Is Actually True
+## 5. What Is Actually True (revised after v2 + v3)
 
-1. An intermediate optimum **can** exist in multi-agent systems with
-   competing consensus and diversity pressures **— but only when β/γ
-   is moderate** (the diversity penalty must be non-trivial).
-2. The optimum's location is **system-specific**.
-3. In multi-agent LLM ensembles, partial sharing **may** beat full
-   sharing — but the regime must be measured first.
+1. **In standard federated learning, consensus benefits dominate
+   diversity penalties** even under significant data heterogeneity
+   (non-IID class splits). Full synchronization wins unless agents
+   produce conflicting or adversarial updates.
+2. An intermediate optimum **can** exist — but only when the diversity
+   penalty γ is large enough relative to the consensus benefit β.
+   In our experiments, only one of seven conditions (v2 low noise)
+   achieved this.
+3. The optimum's location is **system-specific** — never universal.
+4. For practical federated learning, 10× communication cost buys
+   only ~17% accuracy gain. This holds across IID and non-IID.
 
 ---
 
@@ -133,15 +138,33 @@ Full numbers and analysis: [paper/RESULTS_REPORT.md](RESULTS_REPORT.md).
 
 The pre-registered prediction P1 ("an interior optimum
 ρ\* ∈ (0,1) exists for every noise level") is **partially falsified**
-by the MNIST federated learning experiment. At medium and high
+by the v2.1 MNIST federated learning experiment. At medium and high
 label-noise levels, full synchronization (ρ = 1.0) dominated.
 
-**Revised claim:** "An interior optimum may exist when β/γ is
-moderate. At high β/γ, the boundary wins. The threshold is
-system-specific."
+### v3.0 RETRACTION (full discard)
 
-This retraction was made before any post-hoc parameter tuning, in
-accordance with the pre-registration commitment.
+The v3 non-IID regime test (each client sees only 2 digit classes)
+was specifically designed to increase the diversity penalty γ.
+Result: **ρ\* = 1.0 again.** P1 is now fully discarded — not
+scoped, not qualified, discarded.
+
+Of the three v3 predictions: P1-v3 FAIL, P2-v3 PASS, P3-v3 FAIL.
+
+**Revised thesis (post v2 + v3):**
+
+> *"In standard federated learning setups, consensus benefits
+> dominate diversity penalties even under significant data
+> heterogeneity. Optimal connectivity remains at full
+> synchronization unless agents produce conflicting or adversarial
+> updates."*
+
+This is a stronger, more specific claim than the v2.1 revision.
+It is falsifiable: an adversarial-client experiment where the
+interior optimum reappears would rehabilitate a scoped version
+of P1.
+
+Both retractions were made before any post-hoc parameter tuning,
+in accordance with the pre-registration commitments.
 
 ---
 
@@ -166,22 +189,30 @@ For multi-agent AI ensemble designers:
 - Optimal dropout rate in deep learning is empirically 0.2–0.3,
   **not 0.5**.
 - Fully connected transformer attention works well in many tasks.
-- **Our own MNIST experiment shows full sync wins under noisy
-  clients.**
+- **Our own MNIST experiments show full sync wins under both noisy
+  clients (v2) and non-IID class-split clients (v3).**
 
-A general theory must explain these. The present framework now
-does so: high-β/γ regimes correctly predict full-sync dominance.
+A general theory must explain these. The present framework does so:
+when β/γ ≫ 1, consensus dominates and full sync wins. Both IID and
+non-IID MNIST experiments fall in this regime.
 
 ---
 
 ## 9. Conclusion
 
-> *"In multi-agent systems with competing consensus and diversity
-> pressures, an interior optimum in connection density may exist in
-> moderate-β/γ regimes. In high-β/γ regimes, full synchronization
-> dominates. The regime must be determined empirically per system."*
+> *"In standard federated learning setups, consensus benefits dominate
+> diversity penalties even under significant data heterogeneity.
+> Optimal connectivity remains at full synchronization unless agents
+> produce conflicting or adversarial updates."*
 
-Less exciting than v2.0's "interior optimum exists." More accurate.
+Two pre-registered experiments (v2: IID + noise, v3: non-IID class
+splits), seven conditions total. Full sync won in six of seven.
+The one interior optimum (v2 low noise, ρ\*=0.7) was the mildest
+regime tested.
+
+Less exciting than v1's "50% universal rule." Less exciting than
+v2.0's "interior optimum exists." But supported by data from both
+sides of the IID/non-IID divide.
 
 ---
 
